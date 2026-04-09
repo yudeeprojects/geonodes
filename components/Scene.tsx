@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, Suspense, memo } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import {
   OrbitControls,
@@ -14,7 +14,42 @@ import {
 } from "@react-three/drei";
 import { GeoMesh } from "./GeoMesh";
 import { BlenderControls } from "./BlenderControls";
-import { useGeoStore, navState } from "@/lib/store";
+import { useGeoStore, navState, meshRegistry } from "@/lib/store";
+
+function CameraFocusManager() {
+  const selectedId = useGeoStore((state) => state.selectedId);
+  const isGrabActive = useGeoStore((state) => state.isGrabActive);
+  const { controls } = useThree();
+  const [isPointerDown, setIsPointerDown] = React.useState(false);
+
+  useEffect(() => {
+    const handleDown = () => setIsPointerDown(true);
+    const handleUp = () => setIsPointerDown(false);
+    
+    window.addEventListener("pointerdown", handleDown);
+    window.addEventListener("pointerup", handleUp);
+    
+    return () => {
+      window.removeEventListener("pointerdown", handleDown);
+      window.removeEventListener("pointerup", handleUp);
+    };
+  }, []);
+
+  useFrame(() => {
+    if (!controls || !selectedId || isGrabActive || isPointerDown) return;
+    const mesh = meshRegistry.get(selectedId);
+    if (!mesh) return;
+
+    const targetPos = new THREE.Vector3();
+    mesh.getWorldPosition(targetPos);
+    
+    // Smoothly interpolate the orbit target to the object's position
+    (controls as any).target.lerp(targetPos, 0.1);
+    (controls as any).update();
+  });
+
+  return null;
+}
 
 function CameraLayerManager() {
   const { camera } = useThree();
@@ -61,6 +96,7 @@ function SceneContent() {
   return (
     <>
       <CameraLayerManager />
+      <CameraFocusManager />
       <BlenderControls />
       
       <OrbitControls 

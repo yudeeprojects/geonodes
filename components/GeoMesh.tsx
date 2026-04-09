@@ -78,9 +78,19 @@ export function GeoMesh({
         scale={isSelected && isGrabActive ? undefined : data.transform.scale}
         onPointerDown={(e) => {
           if (e.button !== 0) return;
-          if (isGrabActive) return; // Не змінюємо селекшн під час грабу
-          e.stopPropagation();
+          if (isGrabActive) return; 
+          
           setSelectedId(data.id);
+          
+          // PivotControls are visually overlaid but mathematically might be behind the mesh surface.
+          // If we unconditionally stop propagation, the manipulators become unclickable.
+          // We check all raycast intersections to see if an unnamed mesh (like a Pivot axis) was hit.
+          // If so, we let the event propagate DOWN the ray to the Pivot so the user can drag it.
+          const isHoveringPivot = e.intersections.some((hit) => !hit.object.name);
+          
+          if (!isSelected || !isHoveringPivot) {
+            e.stopPropagation();
+          }
         }}
       >
         <bufferGeometry>
