@@ -17,49 +17,36 @@ export function GeoMesh({
   isSelected,
 }: GeoMeshProps) {
   const meshRef = useRef<THREE.Mesh>(null!);
+  const setMeshRef = useGeoStore((state) => state.setMeshRef);
   const setSelectedId = useGeoStore((state) => state.setSelectedId);
   const isGrabActive = useGeoStore((state) => state.isGrabActive);
   const updateTransform = useGeoStore((state) => state.updateTransform);
-  const setMeshRef = useGeoStore((state) => state.setMeshRef);
 
-  // Реєструємо меш у сторі (завжди, незалежно від стану)
+  // Стабільна реєстрація рефа
   useEffect(() => {
-    if (meshRef.current) {
-        setMeshRef(data.id, meshRef.current);
-    }
-  }, [data.id, setMeshRef]);
+    if (meshRef.current) setMeshRef(data.id, meshRef.current);
+    return () => setMeshRef(data.id, null);
+  }, [data.id, setMeshRef, isGrabActive]); // Пере-реєструємо при зміні стану, на всяк випадок
 
-  // Стабільна матриця для ініціалізації PivotControls
-  const matrix = useMemo(() => {
+  // Матриця півота (лише Позиція та Ротація)
+  const pivotMatrix = useMemo(() => {
     const m = new THREE.Matrix4();
     m.compose(
       new THREE.Vector3(...data.transform.position),
       new THREE.Quaternion().setFromEuler(new THREE.Euler(...data.transform.rotation)),
-      new THREE.Vector3(...data.transform.scale)
+      new THREE.Vector3(1, 1, 1) // Скейл завжди тут 1
     );
     return m;
-  }, [data.id, ...data.transform.position, ...data.transform.rotation, ...data.transform.scale]);
-
-  // Шари маніпуляторів
-  useLayoutEffect(() => {
-    if (isSelected && meshRef.current) {
-      const pivotInternalGroup = meshRef.current.parent;
-      if (pivotInternalGroup && pivotInternalGroup !== meshRef.current.parent.parent) { 
-        pivotInternalGroup.traverse((obj: THREE.Object3D) => {
-          if (obj !== meshRef.current) obj.layers.set(1);
-          else obj.layers.set(0);
-        });
-      }
-    }
-  }, [isSelected]); 
+  }, [data.id, ...data.transform.position, ...data.transform.rotation]);
 
   if (!data.settings.visible) return null;
 
   return (
     <PivotControls
-      key={data.id}
+      key={data.id} // Стабільний ключ
+      enabled={isSelected && !isGrabActive}
       visible={isSelected && !isGrabActive}
-      matrix={matrix}
+      matrix={pivotMatrix}
       autoTransform={true}
       depthTest={false}
       fixed={false}
@@ -85,12 +72,13 @@ export function GeoMesh({
       <mesh
         ref={meshRef}
         name={data.id}
-        // ВАЖЛИВО: Під час Grab mode ми прибираємо пропси позиції, 
-        // щоб BlenderControls міг вільно рухати об'єкт через реф.
-        position={isGrabActive ? undefined : [0, 0, 0]}
-        rotation={isGrabActive ? undefined : [0, 0, 0]}
-        scale={isGrabActive ? undefined : [1, 1, 1]}
-        onClick={(e) => {
+        // ВАЖЛИВО: Під час Grab ми ігноруємо пропси, щоб BlenderControls міг рухати меш напряму
+        position={isSelected && isGrabActive ? undefined : [0, 0, 0]}
+        rotation={isSelected && isGrabActive ? undefined : [0, 0, 0]}
+        scale={isSelected && isGrabActive ? undefined : data.transform.scale}
+        onPointerDown={(e) => {
+          if (e.button !== 0) return;
+          if (isGrabActive) return; // Не змінюємо селекшн під час грабу
           e.stopPropagation();
           setSelectedId(data.id);
         }}
@@ -127,8 +115,8 @@ export function GeoMesh({
           color={isSelected ? "#facc15" : data.settings.color}
           wireframe={data.settings.wireframe}
           side={THREE.DoubleSide}
-          roughness={0.5}
-          metalness={0}
+          roughness={0.4}
+          metalness={0.5}
           envMapIntensity={1}
         />
       </mesh>

@@ -1,21 +1,22 @@
-"use client";
-
-import dynamic from "next/dynamic";
+import Scene from "@/components/Scene";
 import { Toolbar } from "@/components/Toolbar";
-
-// Вимикаємо SSR для 3D сцени
-const Scene = dynamic(() => import("@/components/Scene"), { ssr: false });
+import { PropertiesPanel } from "@/components/PropertiesPanel";
 
 export default function Home() {
   return (
-    <main className="relative w-full h-screen overflow-hidden">
-      <div className="absolute top-5 left-5 z-10 text-white bg-black/50 backdrop-blur-md p-4 rounded-xl border border-white/10 shadow-xl">
-        <h1 className="text-xl font-bold tracking-tight">GeoNodes Lab v0.2</h1>
-        <p className="text-xs text-gray-400 uppercase tracking-widest mt-1">Procedural Core</p>
-      </div>
-      
+    <main className="flex h-screen w-full bg-black overflow-hidden select-none">
+      {/* Ліва панель (Toolbar) - абсолютна для "Blender feel" */}
       <Toolbar />
-      <Scene />
+
+      {/* Центральна частина (Scene) */}
+      <div className="flex-1 relative">
+        <Scene />
+      </div>
+
+      {/* Права панель (Properties) */}
+      <div className="z-10 h-full">
+        <PropertiesPanel />
+      </div>
     </main>
   );
 }

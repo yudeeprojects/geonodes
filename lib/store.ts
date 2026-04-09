@@ -4,14 +4,17 @@ import * as THREE from "three";
 import { UniversalGeometry } from "@/types/geometry";
 import { initialNodes } from "@/data/mockNodes";
 
+// НЕ-РЕАКТИВНИЙ РЕЄСТР
+export const meshRegistry = new Map<string, THREE.Mesh>();
+// НЕ-РЕАКТИВНИЙ СТАН НАВІГАЦІЇ
+export const navState = { isNavigating: false };
+
 interface GeoState {
   nodes: UniversalGeometry[];
   selectedId: string | null;
   isGrabActive: boolean;
-  selectionLock: boolean; // Блокування деселекції після Grab mode
+  selectionLock: boolean;
   
-  meshRefs: Map<string, THREE.Mesh>;
-
   // Actions
   setSelectedId: (id: string | null) => void;
   setIsGrabActive: (active: boolean) => void;
@@ -28,6 +31,11 @@ interface GeoState {
     }>
   ) => void;
 
+  updateNodeSettings: (
+    id: string,
+    settings: Partial<UniversalGeometry["settings"]>
+  ) => void;
+
   addNode: (node: UniversalGeometry) => void;
   deleteNode: (id: string) => void;
 }
@@ -37,10 +45,8 @@ export const useGeoStore = create<GeoState>((set) => ({
   selectedId: null,
   isGrabActive: false,
   selectionLock: false,
-  meshRefs: new Map(),
 
   setSelectedId: (id) => set((state) => {
-    // Якщо заблоковано - ігноруємо скидання (null), але дозволяємо зміну на інший об'єкт
     if (state.selectionLock && id === null) return state;
     return { selectedId: id };
   }),
@@ -48,12 +54,10 @@ export const useGeoStore = create<GeoState>((set) => ({
   setIsGrabActive: (isGrabActive) => set({ isGrabActive }),
   setSelectionLock: (selectionLock) => set({ selectionLock }),
   
-  setMeshRef: (id, ref) => set((state) => {
-    const newRefs = new Map(state.meshRefs);
-    if (ref) newRefs.set(id, ref);
-    else newRefs.delete(id);
-    return { meshRefs: newRefs };
-  }),
+  setMeshRef: (id, ref) => {
+    if (ref) meshRegistry.set(id, ref);
+    else meshRegistry.delete(id);
+  },
 
   setNodes: (nodes) => set({ nodes }),
 
@@ -62,6 +66,15 @@ export const useGeoStore = create<GeoState>((set) => ({
       nodes: state.nodes.map((node) =>
         node.id === id 
           ? { ...node, transform: { ...node.transform, ...transform } } 
+          : node
+      ),
+    })),
+
+  updateNodeSettings: (id, settings) =>
+    set((state) => ({
+      nodes: state.nodes.map((node) =>
+        node.id === id 
+          ? { ...node, settings: { ...node.settings, ...settings } } 
           : node
       ),
     })),
