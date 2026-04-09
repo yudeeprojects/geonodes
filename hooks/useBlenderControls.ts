@@ -15,6 +15,7 @@ export function useBlenderControls() {
   const updateTransform = useGeoStore((state) => state.updateTransform);
   const setIsGrabActive = useGeoStore((state) => state.setIsGrabActive);
   const setSelectionLock = useGeoStore((state) => state.setSelectionLock);
+  const togglePropertiesPanel = useGeoStore((state) => state.togglePropertiesPanel);
 
   const [active, setActive] = useState(false);
   const [mode, setMode] = useState<TransformMode>("move");
@@ -79,9 +80,14 @@ export function useBlenderControls() {
         if (mode === "move") {
           updates.position = [currentWorldTarget.current.x, currentWorldTarget.current.y, currentWorldTarget.current.z];
         } else if (mode === "scale" && mesh) {
-          updates.scale = [mesh.scale.x, mesh.scale.y, mesh.scale.z];
+          const worldScale = new THREE.Vector3();
+          mesh.getWorldScale(worldScale);
+          updates.scale = [worldScale.x, worldScale.y, worldScale.z];
         } else if (mode === "rotate" && mesh) {
-          updates.rotation = [mesh.rotation.x, mesh.rotation.y, mesh.rotation.z];
+          const worldQuat = new THREE.Quaternion();
+          mesh.getWorldQuaternion(worldQuat);
+          const worldRot = new THREE.Euler().setFromQuaternion(worldQuat);
+          updates.rotation = [worldRot.x, worldRot.y, worldRot.z];
         }
 
         updateTransform(selectedId, updates);
@@ -112,14 +118,22 @@ export function useBlenderControls() {
       if (["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName || "")) return;
       const key = e.key.toLowerCase();
       if (!active) {
-        if (key === "g" && selectedId) startTransform("move");
-        if (key === "s" && selectedId) startTransform("scale");
-        if (key === "r" && selectedId) startTransform("rotate");
+        if (key === "g" && selectedId) { e.preventDefault(); startTransform("move"); }
+        if (key === "s" && selectedId) { e.preventDefault(); startTransform("scale"); }
+        if (key === "r" && selectedId) { e.preventDefault(); startTransform("rotate"); }
+        if (key === "n") { e.preventDefault(); togglePropertiesPanel(); }
         return;
       }
-      if (key === "escape") cancelTransform();
-      if (key === "enter") confirmTransform();
+      if (key === "escape") {
+        e.preventDefault();
+        cancelTransform();
+      }
+      if (key === "enter") {
+        e.preventDefault();
+        confirmTransform();
+      }
       if (key === "x" || key === "y" || key === "z") {
+        e.preventDefault();
         setConstraint(e.shiftKey ? (key === "x" ? "yz" : key === "y" ? "xz" : "xy") : (key as Constraint));
         setInputBuffer("");
         return;

@@ -43,7 +43,10 @@ export function Toolbar() {
         return (
           <button
             key={prim.name}
-            onClick={() => handleAdd(prim.creator, prim.name, prim.color)}
+            onClick={(e) => {
+                handleAdd(prim.creator, prim.name, prim.color);
+                e.currentTarget.blur();
+            }}
             className="w-11 h-11 flex items-center justify-center text-white/70 hover:text-white bg-white/5 hover:bg-white/15 rounded-xl transition-all border border-white/5 hover:border-white/10 active:scale-90 group relative"
             title={prim.name}
           >

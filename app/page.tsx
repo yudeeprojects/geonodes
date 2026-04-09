@@ -4,17 +4,13 @@ import { PropertiesPanel } from "@/components/PropertiesPanel";
 
 export default function Home() {
   return (
-    <main className="flex h-screen w-full bg-black overflow-hidden select-none">
+    <main className="flex h-screen w-full bg-black overflow-hidden select-none relative">
       {/* Ліва панель (Toolbar) - абсолютна для "Blender feel" */}
       <Toolbar />
 
-      {/* Центральна частина (Scene) */}
-      <div className="flex-1 relative">
+      {/* Центральна частина (Scene) + Права панель (Properties) */}
+      <div className="flex-1 relative overflow-hidden">
         <Scene />
-      </div>
-
-      {/* Права панель (Properties) */}
-      <div className="z-10 h-full">
         <PropertiesPanel />
       </div>
     </main>

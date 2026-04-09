@@ -14,11 +14,13 @@ interface GeoState {
   selectedId: string | null;
   isGrabActive: boolean;
   selectionLock: boolean;
+  isPropertiesPanelOpen: boolean;
   
   // Actions
   setSelectedId: (id: string | null) => void;
   setIsGrabActive: (active: boolean) => void;
   setSelectionLock: (lock: boolean) => void;
+  togglePropertiesPanel: () => void;
   setMeshRef: (id: string, ref: THREE.Mesh | null) => void;
   setNodes: (nodes: UniversalGeometry[]) => void;
   
@@ -45,6 +47,7 @@ export const useGeoStore = create<GeoState>((set) => ({
   selectedId: null,
   isGrabActive: false,
   selectionLock: false,
+  isPropertiesPanelOpen: true,
 
   setSelectedId: (id) => set((state) => {
     if (state.selectionLock && id === null) return state;
@@ -53,6 +56,7 @@ export const useGeoStore = create<GeoState>((set) => ({
   
   setIsGrabActive: (isGrabActive) => set({ isGrabActive }),
   setSelectionLock: (selectionLock) => set({ selectionLock }),
+  togglePropertiesPanel: () => set((state) => ({ isPropertiesPanelOpen: !state.isPropertiesPanelOpen })),
   
   setMeshRef: (id, ref) => {
     if (ref) meshRegistry.set(id, ref);
