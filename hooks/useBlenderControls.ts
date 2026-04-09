@@ -5,12 +5,17 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { useGeoStore, meshRegistry } from "@/lib/store";
-
-export type Constraint = "none" | "x" | "y" | "z" | "xy" | "xz" | "yz";
-export type TransformMode = "move" | "scale" | "rotate";
+import { Constraint, TransformMode } from "./types";
+import { useNumericBuffer } from "./useNumericBuffer";
+import { 
+  getConstrainedDelta, 
+  getConstraintPlane, 
+  calculateScaleConstraint, 
+  calculateRotationConstraint 
+} from "@/lib/utils/math";
 
 export function useBlenderControls() {
-  const { camera, mouse, raycaster, size } = useThree();
+  const { camera, mouse, raycaster } = useThree();
   const selectedId = useGeoStore((state) => state.selectedId);
   const updateTransform = useGeoStore((state) => state.updateTransform);
   const setIsGrabActive = useGeoStore((state) => state.setIsGrabActive);
@@ -20,13 +25,12 @@ export function useBlenderControls() {
   const [active, setActive] = useState(false);
   const [mode, setMode] = useState<TransformMode>("move");
   const [constraint, setConstraint] = useState<Constraint>("none");
-  const [inputBuffer, setInputBuffer] = useState<string>("");
+  const numBuffer = useNumericBuffer();
 
   const startWorldPos = useRef<THREE.Vector3>(new THREE.Vector3());
   const currentWorldTarget = useRef<THREE.Vector3>(new THREE.Vector3());
   const startScale = useRef<THREE.Vector3>(new THREE.Vector3(1, 1, 1));
   const startRotation = useRef<THREE.Euler>(new THREE.Euler());
-  const movePlane = useRef<THREE.Plane>(new THREE.Plane());
   const startMouseWorldPos = useRef<THREE.Vector3>(new THREE.Vector3());
   const initialDistance = useRef<number>(1);
   const initialMouseAngle = useRef<number>(0);
@@ -40,7 +44,7 @@ export function useBlenderControls() {
     setMode(newMode);
     setIsGrabActive(true);
     setConstraint("none");
-    setInputBuffer("");
+    numBuffer.clear();
     
     mesh.getWorldPosition(startWorldPos.current);
     currentWorldTarget.current.copy(startWorldPos.current);
@@ -51,18 +55,16 @@ export function useBlenderControls() {
         mesh.position.set(0, 0, 0);
     }
 
-    const cameraDir = new THREE.Vector3();
-    camera.getWorldDirection(cameraDir);
-    movePlane.current.setFromNormalAndCoplanarPoint(cameraDir, startWorldPos.current);
+    const movePlane = getConstraintPlane(startWorldPos.current, camera, "none");
 
     raycaster.setFromCamera(mouse, camera);
     const intersect = new THREE.Vector3();
-    if (raycaster.ray.intersectPlane(movePlane.current, intersect)) {
+    if (raycaster.ray.intersectPlane(movePlane, intersect)) {
         startMouseWorldPos.current.copy(intersect);
         const dist = intersect.distanceTo(startWorldPos.current);
         initialDistance.current = dist < 0.2 ? 1.0 : dist;
 
-        // Для ротації: кут в екранному просторі або відносно центру
+        // For rotation: screen space angle
         const screenCenter = startWorldPos.current.clone().project(camera);
         initialMouseAngle.current = Math.atan2(mouse.y - screenCenter.y, mouse.x - screenCenter.x);
     } else {
@@ -70,7 +72,7 @@ export function useBlenderControls() {
         initialDistance.current = 1;
         initialMouseAngle.current = 0;
     }
-  }, [selectedId, camera, mouse, raycaster, setIsGrabActive]);
+  }, [selectedId, camera, mouse, raycaster, setIsGrabActive, numBuffer]);
 
   const confirmTransform = useCallback(() => {
     if (active && selectedId) {
@@ -96,8 +98,8 @@ export function useBlenderControls() {
     }
     setActive(false);
     setIsGrabActive(false);
-    setInputBuffer("");
-  }, [active, selectedId, mode, setIsGrabActive, updateTransform, setSelectionLock]);
+    numBuffer.clear();
+  }, [active, selectedId, mode, setIsGrabActive, updateTransform, setSelectionLock, numBuffer]);
 
   const cancelTransform = useCallback(() => {
     if (active && selectedId) {
@@ -110,13 +112,14 @@ export function useBlenderControls() {
     }
     setActive(false);
     setIsGrabActive(false);
-    setInputBuffer("");
-  }, [active, selectedId, setIsGrabActive]);
+    numBuffer.clear();
+  }, [active, selectedId, setIsGrabActive, numBuffer]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName || "")) return;
       const key = e.key.toLowerCase();
+      
       if (!active) {
         if (key === "g" && selectedId) { e.preventDefault(); startTransform("move"); }
         if (key === "s" && selectedId) { e.preventDefault(); startTransform("scale"); }
@@ -124,70 +127,63 @@ export function useBlenderControls() {
         if (key === "n") { e.preventDefault(); togglePropertiesPanel(); }
         return;
       }
+
       if (key === "escape") {
         e.preventDefault();
         cancelTransform();
+        return;
       }
       if (key === "enter") {
         e.preventDefault();
         confirmTransform();
+        return;
       }
+      
       if (key === "x" || key === "y" || key === "z") {
         e.preventDefault();
         setConstraint(e.shiftKey ? (key === "x" ? "yz" : key === "y" ? "xz" : "xy") : (key as Constraint));
-        setInputBuffer("");
+        numBuffer.clear();
         return;
       }
-      if ((e.key >= "0" && e.key <= "9") || e.key === "." || e.key === "-") {
-        setInputBuffer(prev => prev + e.key);
-      }
-      if (e.key === "backspace") {
-        setInputBuffer(prev => prev.slice(0, -1));
-      }
+
+      numBuffer.handleKey(e.key);
     };
+
     const handleMouseDown = (e: MouseEvent) => {
       if (!active) return;
       if (e.button === 0) confirmTransform();
       if (e.button === 2) cancelTransform();
     };
+
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("mousedown", handleMouseDown);
+    
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("mousedown", handleMouseDown);
     };
-  }, [selectedId, active, startTransform, confirmTransform, cancelTransform]);
+  }, [selectedId, active, startTransform, confirmTransform, cancelTransform, numBuffer, togglePropertiesPanel]);
 
   useFrame(() => {
     if (!active || !selectedId) return;
     const mesh = meshRegistry.get(selectedId);
     if (!mesh || !mesh.parent) return;
 
+    const numVal = numBuffer.getValue();
+
     if (mode === "move") {
-      if (inputBuffer !== "" && (constraint === "x" || constraint === "y" || constraint === "z")) {
-        const val = parseFloat(inputBuffer);
-        if (!isNaN(val)) {
-          currentWorldTarget.current.copy(startWorldPos.current);
-          if (constraint === "x") currentWorldTarget.current.x = val;
-          if (constraint === "y") currentWorldTarget.current.y = val;
-          if (constraint === "z") currentWorldTarget.current.z = val;
-        }
+      if (numVal !== null && (constraint === "x" || constraint === "y" || constraint === "z")) {
+        currentWorldTarget.current.copy(startWorldPos.current);
+        if (constraint === "x") currentWorldTarget.current.x = numVal;
+        if (constraint === "y") currentWorldTarget.current.y = numVal;
+        if (constraint === "z") currentWorldTarget.current.z = numVal;
       } else {
         raycaster.setFromCamera(mouse, camera);
         const currentMouseWorldPos = new THREE.Vector3();
-        let targetPlane = movePlane.current;
-        if (constraint === "xy" || constraint === "xz" || constraint === "yz") {
-          const normal = new THREE.Vector3(constraint === "yz" ? 1 : 0, constraint === "xz" ? 1 : 0, constraint === "xy" ? 1 : 0);
-          targetPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(normal, startWorldPos.current);
-        }
+        const targetPlane = getConstraintPlane(startWorldPos.current, camera, constraint);
+        
         if (raycaster.ray.intersectPlane(targetPlane, currentMouseWorldPos)) {
-          const delta = new THREE.Vector3().subVectors(currentMouseWorldPos, startMouseWorldPos.current);
-          if (constraint === "x") { delta.y = 0; delta.z = 0; }
-          if (constraint === "y") { delta.x = 0; delta.z = 0; }
-          if (constraint === "z") { delta.x = 0; delta.y = 0; }
-          if (constraint === "xy") { delta.z = 0; }
-          if (constraint === "xz") { delta.y = 0; }
-          if (constraint === "yz") { delta.x = 0; }
+          const delta = getConstrainedDelta(startMouseWorldPos.current, currentMouseWorldPos, constraint);
           currentWorldTarget.current.copy(startWorldPos.current).add(delta);
         }
       }
@@ -196,56 +192,31 @@ export function useBlenderControls() {
 
     } else if (mode === "scale") {
       let scaleFactor = 1;
-      if (inputBuffer !== "") {
-        const val = parseFloat(inputBuffer);
-        if (!isNaN(val)) scaleFactor = val;
+      if (numVal !== null) {
+        scaleFactor = numVal;
       } else {
         raycaster.setFromCamera(mouse, camera);
         const currentMouseWorldPos = new THREE.Vector3();
-        if (raycaster.ray.intersectPlane(movePlane.current, currentMouseWorldPos)) {
+        const plane = getConstraintPlane(startWorldPos.current, camera, "none");
+        if (raycaster.ray.intersectPlane(plane, currentMouseWorldPos)) {
           scaleFactor = currentMouseWorldPos.distanceTo(startWorldPos.current) / initialDistance.current;
         }
       }
-      const newScale = startScale.current.clone();
-      if (constraint === "none") newScale.multiplyScalar(scaleFactor);
-      else if (constraint === "x") newScale.x *= scaleFactor;
-      else if (constraint === "y") newScale.y *= scaleFactor;
-      else if (constraint === "z") newScale.z *= scaleFactor;
-      else if (constraint === "xy") { newScale.x *= scaleFactor; newScale.y *= scaleFactor; }
-      else if (constraint === "xz") { newScale.x *= scaleFactor; newScale.z *= scaleFactor; }
-      else if (constraint === "yz") { newScale.y *= scaleFactor; newScale.z *= scaleFactor; }
-      mesh.scale.copy(newScale);
+      mesh.scale.copy(calculateScaleConstraint(scaleFactor, startScale.current, constraint));
 
     } else if (mode === "rotate") {
       let angle = 0;
-      if (inputBuffer !== "") {
-        const val = parseFloat(inputBuffer);
-        if (!isNaN(val)) angle = THREE.MathUtils.degToRad(val);
+      if (numVal !== null) {
+        angle = THREE.MathUtils.degToRad(numVal);
       } else {
         const screenCenter = startWorldPos.current.clone().project(camera);
-        // Реверс кута для того, щоб об'єкт крутився "за мишкою"
         const currentAngle = Math.atan2(mouse.y - screenCenter.y, mouse.x - screenCenter.x);
-        angle = (currentAngle - initialMouseAngle.current) * 2; // Коефіцієнт 2 для чутливості
+        angle = (currentAngle - initialMouseAngle.current) * 2;
       }
-
-      if (constraint === "none") {
-        // У вільному режимі Blender крутить об'єкт навколо осі погляду камери
-        const cameraDir = new THREE.Vector3();
-        camera.getWorldDirection(cameraDir);
-        
-        const qStart = new THREE.Quaternion().setFromEuler(startRotation.current);
-        const qDelta = new THREE.Quaternion().setFromAxisAngle(cameraDir, -angle);
-        const qFinal = qDelta.multiply(qStart);
-        mesh.quaternion.copy(qFinal);
-      } else {
-        const newRotation = startRotation.current.clone();
-        if (constraint === "x") newRotation.x += angle;
-        else if (constraint === "y") newRotation.y += angle;
-        else if (constraint === "z") newRotation.z += angle;
-        mesh.rotation.copy(newRotation);
-      }
+      // Apply rotation math helper
+      calculateRotationConstraint(angle, startRotation.current, constraint, camera, mesh);
     }
   });
 
-  return { active, mode, constraint, inputBuffer };
+  return { active, mode, constraint, inputBuffer: numBuffer.buffer };
 }
