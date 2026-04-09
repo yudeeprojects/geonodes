@@ -37,7 +37,10 @@ export function Toolbar() {
   };
 
   return (
-    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-1.5 p-1.5 bg-black/80 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl">
+    <div className="flex flex-col gap-1.5 p-1.5 bg-black/40 h-full">
+      <div className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] py-3 text-center border-b border-white/5 mb-2">
+        Primitives
+      </div>
       {PRIMITIVES.map((prim) => {
         const { Icon } = prim;
         return (
@@ -53,7 +56,7 @@ export function Toolbar() {
             <Icon size={24} weight="duotone" style={{ color: prim.color }} className="opacity-80 group-hover:opacity-100" />
             
             {/* Tooltip hint */}
-            <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-[10px] font-bold text-white rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap border border-white/10">
+            <span className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-black text-[10px] font-bold text-white rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap border border-white/10 z-50">
               {prim.name}
             </span>
           </button>

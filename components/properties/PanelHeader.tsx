@@ -8,15 +8,16 @@ interface PanelHeaderProps {
 
 export function PanelHeader({ node }: PanelHeaderProps) {
   return (
-    <div className="p-6 border-b border-white/5 bg-gradient-to-br from-white/10 to-transparent">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-yellow-400/20 flex items-center justify-center text-yellow-400 border border-yellow-400/20 shadow-lg shadow-yellow-400/5">
-          <Cube size={24} weight="duotone" />
-        </div>
-        <div>
-          <h2 className="text-sm font-bold tracking-tight text-white/90 uppercase">{node.type}</h2>
-          <p className="text-[10px] text-white/40 font-mono tracking-tighter">{node.id}</p>
-        </div>
+    <div className="flex items-center gap-2 px-6 py-4 border-b border-white/5 bg-white/5">
+      <div className="text-yellow-400/60 transition-colors">
+        <Cube size={16} weight="duotone" />
+      </div>
+      <div className="flex items-center gap-2">
+        <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">Properties</h3>
+        <div className="w-px h-2 bg-white/10" />
+        <span className="text-[9px] font-mono text-white/20 uppercase tracking-tighter">
+          {node.userData.primitiveType || node.type} ({node.id.split('-')[1] || node.id})
+        </span>
       </div>
     </div>
   );

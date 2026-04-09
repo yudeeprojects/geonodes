@@ -19,6 +19,7 @@ import { useGeoStore, navState, meshRegistry } from "@/lib/store";
 function CameraFocusManager() {
   const selectedId = useGeoStore((state) => state.selectedId);
   const isGrabActive = useGeoStore((state) => state.isGrabActive);
+  const orbitAroundSelection = useGeoStore((state) => state.orbitAroundSelection);
   const { controls } = useThree();
   const [isPointerDown, setIsPointerDown] = React.useState(false);
 
@@ -36,7 +37,7 @@ function CameraFocusManager() {
   }, []);
 
   useFrame(() => {
-    if (!controls || !selectedId || isGrabActive || isPointerDown) return;
+    if (!controls || !selectedId || isGrabActive || isPointerDown || !orbitAroundSelection) return;
     const mesh = meshRegistry.get(selectedId);
     if (!mesh) return;
 
@@ -154,7 +155,7 @@ export default function Scene() {
   const setSelectedId = useGeoStore((state) => state.setSelectedId);
 
   return (
-    <div className="w-full h-screen bg-black">
+    <div className="w-full h-full bg-black">
       <Canvas 
         shadows
         dpr={[1, 2]}

@@ -15,12 +15,26 @@ interface GeoState {
   isGrabActive: boolean;
   selectionLock: boolean;
   isPropertiesPanelOpen: boolean;
+  isBottomPanelOpen: boolean;
+  isLeftSidebarOpen: boolean;
+  isTopPanelOpen: boolean;
+  isSettingsOpen: boolean;
+  activeSidebarTab: "outliner" | "properties";
+  bottomPanelHeight: number;
+  orbitAroundSelection: boolean;
   
   // Actions
   setSelectedId: (id: string | null) => void;
   setIsGrabActive: (active: boolean) => void;
   setSelectionLock: (lock: boolean) => void;
   togglePropertiesPanel: () => void;
+  toggleBottomPanel: () => void;
+  toggleLeftSidebar: () => void;
+  toggleTopPanel: () => void;
+  toggleSettings: () => void;
+  setOrbitAroundSelection: (orbit: boolean) => void;
+  setBottomPanelHeight: (height: number) => void;
+  setSidebarTab: (tab: "outliner" | "properties") => void;
   setMeshRef: (id: string, ref: THREE.Mesh | null) => void;
   setNodes: (nodes: UniversalGeometry[]) => void;
   
@@ -48,15 +62,32 @@ export const useGeoStore = create<GeoState>((set) => ({
   isGrabActive: false,
   selectionLock: false,
   isPropertiesPanelOpen: true,
+  isBottomPanelOpen: true,
+  isLeftSidebarOpen: true,
+  isTopPanelOpen: true,
+  isSettingsOpen: false,
+  activeSidebarTab: "properties",
+  bottomPanelHeight: 320,
+  orbitAroundSelection: true,
 
   setSelectedId: (id) => set((state) => {
     if (state.selectionLock && id === null) return state;
-    return { selectedId: id };
+    return { 
+      selectedId: id,
+      activeSidebarTab: id ? "properties" : state.activeSidebarTab 
+    };
   }),
   
   setIsGrabActive: (isGrabActive) => set({ isGrabActive }),
   setSelectionLock: (selectionLock) => set({ selectionLock }),
   togglePropertiesPanel: () => set((state) => ({ isPropertiesPanelOpen: !state.isPropertiesPanelOpen })),
+  toggleBottomPanel: () => set((state) => ({ isBottomPanelOpen: !state.isBottomPanelOpen })),
+  toggleLeftSidebar: () => set((state) => ({ isLeftSidebarOpen: !state.isLeftSidebarOpen })),
+  toggleTopPanel: () => set((state) => ({ isTopPanelOpen: !state.isTopPanelOpen })),
+  toggleSettings: () => set((state) => ({ isSettingsOpen: !state.isSettingsOpen })),
+  setOrbitAroundSelection: (orbitAroundSelection) => set({ orbitAroundSelection }),
+  setBottomPanelHeight: (height) => set({ bottomPanelHeight: height }),
+  setSidebarTab: (tab) => set({ activeSidebarTab: tab }),
   
   setMeshRef: (id, ref) => {
     if (ref) meshRegistry.set(id, ref);

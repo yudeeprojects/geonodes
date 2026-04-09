@@ -21,6 +21,9 @@ export function useBlenderControls() {
   const setIsGrabActive = useGeoStore((state) => state.setIsGrabActive);
   const setSelectionLock = useGeoStore((state) => state.setSelectionLock);
   const togglePropertiesPanel = useGeoStore((state) => state.togglePropertiesPanel);
+  const toggleBottomPanel = useGeoStore((state) => state.toggleBottomPanel);
+  const toggleLeftSidebar = useGeoStore((state) => state.toggleLeftSidebar);
+  const toggleTopPanel = useGeoStore((state) => state.toggleTopPanel);
 
   const [active, setActive] = useState(false);
   const [mode, setMode] = useState<TransformMode>("move");
@@ -125,6 +128,9 @@ export function useBlenderControls() {
         if (key === "s" && selectedId) { e.preventDefault(); startTransform("scale"); }
         if (key === "r" && selectedId) { e.preventDefault(); startTransform("rotate"); }
         if (key === "n") { e.preventDefault(); togglePropertiesPanel(); }
+        if (key === "b") { e.preventDefault(); toggleBottomPanel(); }
+        if (key === "v") { e.preventDefault(); toggleLeftSidebar(); }
+        if (key === "t") { e.preventDefault(); toggleTopPanel(); }
         return;
       }
 
@@ -162,7 +168,7 @@ export function useBlenderControls() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("mousedown", handleMouseDown);
     };
-  }, [selectedId, active, startTransform, confirmTransform, cancelTransform, numBuffer, togglePropertiesPanel]);
+  }, [selectedId, active, startTransform, confirmTransform, cancelTransform, numBuffer, togglePropertiesPanel, toggleBottomPanel, toggleLeftSidebar, toggleTopPanel]);
 
   useFrame(() => {
     if (!active || !selectedId) return;
