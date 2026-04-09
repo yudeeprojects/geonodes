@@ -29,7 +29,7 @@ export function LeftSidebar() {
       </button>
 
       {/* Sidebar Content Stack */}
-      <div className="w-16 h-full bg-black/60 backdrop-blur-3xl border-r border-white/10 flex flex-col text-white shadow-2xl overflow-hidden">
+      <div className="w-16 h-full bg-black/60 backdrop-blur-3xl border-r border-white/10 flex flex-col text-white shadow-2xl">
         <Toolbar />
       </div>
     </div>

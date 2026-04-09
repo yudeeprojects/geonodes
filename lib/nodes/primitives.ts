@@ -146,3 +146,14 @@ export const createCircle = (
     pos,
     color,
   );
+
+export const createHeightmap = (
+  id: string,
+  pos: [number, number, number],
+  color: string,
+) => {
+  const geo = new THREE.PlaneGeometry(10, 10, 100, 100);
+  geo.rotateX(-Math.PI / 2); // Make it horizontal by default
+  return createPrimitive(id, "Heightmap", geo, pos, color);
+};
+

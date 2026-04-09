@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useGeoStore } from "@/lib/store";
-import { CaretUp, CaretDown, CubeFocus, Target, Check } from "@phosphor-icons/react";
+import { CaretUp, CaretDown, CubeFocus, Target, Check, ArrowsOut, HandPointing } from "@phosphor-icons/react";
 
 export function TopPanel() {
   const isTopPanelOpen = useGeoStore((state) => state.isTopPanelOpen);
@@ -10,6 +10,8 @@ export function TopPanel() {
   const toggleSettings = useGeoStore((state) => state.toggleSettings);
   const orbitAroundSelection = useGeoStore((state) => state.orbitAroundSelection);
   const setOrbitAroundSelection = useGeoStore((state) => state.setOrbitAroundSelection);
+  const showManipulators = useGeoStore((state) => state.showManipulators);
+  const setShowManipulators = useGeoStore((state) => state.setShowManipulators);
 
   return (
     <div 
@@ -80,6 +82,21 @@ export function TopPanel() {
                 {orbitAroundSelection && <Check size={10} weight="bold" className="text-black" />}
               </div>
               <Target size={16} weight={orbitAroundSelection ? "fill" : "regular"} />
+            </button>
+
+            <button
+               onClick={() => setShowManipulators(!showManipulators)}
+               className={`flex items-center gap-2 px-1.5 py-1 rounded transition-all group ${
+                showManipulators ? 'bg-amber-500/20 text-amber-500' : 'text-white/30 hover:bg-white/5 hover:text-white/50'
+               }`}
+               title="Show/Hide Manipulators"
+            >
+              <div className={`w-3 h-3 rounded-[3px] border flex items-center justify-center transition-colors ${
+                showManipulators ? 'border-amber-500 bg-amber-500' : 'border-white/20 group-hover:border-white/40'
+              }`}>
+                {showManipulators && <Check size={10} weight="bold" className="text-black" />}
+              </div>
+              <ArrowsOut size={16} weight={showManipulators ? "bold" : "regular"} />
             </button>
           </div>
           

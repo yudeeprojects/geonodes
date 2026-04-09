@@ -20,8 +20,10 @@ interface GeoState {
   isTopPanelOpen: boolean;
   isSettingsOpen: boolean;
   activeSidebarTab: "outliner" | "properties";
+  activeBottomTab: "nodes" | "data";
   bottomPanelHeight: number;
   orbitAroundSelection: boolean;
+  showManipulators: boolean;
   
   // Actions
   setSelectedId: (id: string | null) => void;
@@ -33,8 +35,10 @@ interface GeoState {
   toggleTopPanel: () => void;
   toggleSettings: () => void;
   setOrbitAroundSelection: (orbit: boolean) => void;
+  setShowManipulators: (show: boolean) => void;
   setBottomPanelHeight: (height: number) => void;
   setSidebarTab: (tab: "outliner" | "properties") => void;
+  setBottomTab: (tab: "nodes" | "data") => void;
   setMeshRef: (id: string, ref: THREE.Mesh | null) => void;
   setNodes: (nodes: UniversalGeometry[]) => void;
   
@@ -67,8 +71,10 @@ export const useGeoStore = create<GeoState>((set) => ({
   isTopPanelOpen: true,
   isSettingsOpen: false,
   activeSidebarTab: "properties",
+  activeBottomTab: "nodes",
   bottomPanelHeight: 320,
   orbitAroundSelection: true,
+  showManipulators: true,
 
   setSelectedId: (id) => set((state) => {
     if (state.selectionLock && id === null) return state;
@@ -86,8 +92,10 @@ export const useGeoStore = create<GeoState>((set) => ({
   toggleTopPanel: () => set((state) => ({ isTopPanelOpen: !state.isTopPanelOpen })),
   toggleSettings: () => set((state) => ({ isSettingsOpen: !state.isSettingsOpen })),
   setOrbitAroundSelection: (orbitAroundSelection) => set({ orbitAroundSelection }),
+  setShowManipulators: (showManipulators) => set({ showManipulators }),
   setBottomPanelHeight: (height) => set({ bottomPanelHeight: height }),
   setSidebarTab: (tab) => set({ activeSidebarTab: tab }),
+  setBottomTab: (tab) => set({ activeBottomTab: tab }),
   
   setMeshRef: (id, ref) => {
     if (ref) meshRegistry.set(id, ref);

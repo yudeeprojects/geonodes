@@ -11,6 +11,7 @@ import {
   ContactShadows,
   GizmoHelper,
   GizmoViewport,
+  Line,
 } from "@react-three/drei";
 import { GeoMesh } from "./GeoMesh";
 import { BlenderControls } from "./BlenderControls";
@@ -138,6 +139,26 @@ function SceneContent() {
             resolution={512} 
         />
         <Grid position={[0, -0.01, 0]} infiniteGrid sectionSize={1} sectionColor="#333" cellColor="#111" fadeDistance={30} />
+        
+        {/* X Axis (Red) */}
+        <Line 
+          points={[[-100, 0, 0], [100, 0, 0]]} 
+          color="#ff4060" 
+          lineWidth={1} 
+          transparent 
+          opacity={0.5} 
+          position={[0, 0.001, 0]} 
+        />
+        
+        {/* Z Axis (Blue) */}
+        <Line 
+          points={[[0, 0, -100], [0, 0, 100]]} 
+          color="#2fa1ff" 
+          lineWidth={1} 
+          transparent 
+          opacity={0.5} 
+          position={[0, 0.001, 0]} 
+        />
 
         {nodes.map((node) => (
           <GeoMesh key={node.id} data={node} isSelected={selectedId === node.id} />

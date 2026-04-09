@@ -3,7 +3,7 @@
 
 import * as THREE from "three";
 import React, { useMemo, useRef, useLayoutEffect, useEffect } from "react";
-import { PivotControls } from "@react-three/drei";
+import { PivotControls, Edges } from "@react-three/drei";
 import { UniversalGeometry } from "@/types/geometry";
 import { useGeoStore } from "@/lib/store";
 
@@ -21,6 +21,7 @@ export function GeoMesh({
   const setSelectedId = useGeoStore((state) => state.setSelectedId);
   const isGrabActive = useGeoStore((state) => state.isGrabActive);
   const updateTransform = useGeoStore((state) => state.updateTransform);
+  const showManipulators = useGeoStore((state) => state.showManipulators);
 
   // Стабільна реєстрація рефа
   useEffect(() => {
@@ -44,8 +45,8 @@ export function GeoMesh({
   return (
     <PivotControls
       key={data.id} // Стабільний ключ
-      enabled={isSelected && !isGrabActive}
-      visible={isSelected && !isGrabActive}
+      enabled={isSelected && !isGrabActive && showManipulators}
+      visible={isSelected && !isGrabActive && showManipulators}
       matrix={pivotMatrix}
       autoTransform={true}
       depthTest={false}
@@ -122,13 +123,20 @@ export function GeoMesh({
           )}
         </bufferGeometry>
         <meshStandardMaterial
-          color={isSelected ? "#facc15" : data.settings.color}
+          color={data.settings.color}
           wireframe={data.settings.wireframe}
           side={THREE.DoubleSide}
           roughness={0.4}
           metalness={0.5}
           envMapIntensity={1}
         />
+        {isSelected && (
+          <Edges
+            scale={1}
+            threshold={15}
+            color="#ff8c00" // Blender-style orange outline
+          />
+        )}
       </mesh>
     </PivotControls>
   );

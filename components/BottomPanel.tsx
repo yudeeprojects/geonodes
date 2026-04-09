@@ -2,13 +2,15 @@
 
 import React, { useCallback, useRef } from "react";
 import { useGeoStore } from "@/lib/store";
-import { CaretUp, CaretDown, ShareNetwork } from "@phosphor-icons/react";
+import { CaretUp, CaretDown, ShareNetwork, Table } from "@phosphor-icons/react";
 
 export function BottomPanel() {
   const isBottomPanelOpen = useGeoStore((state) => state.isBottomPanelOpen);
   const toggleBottomPanel = useGeoStore((state) => state.toggleBottomPanel);
   const height = useGeoStore((state) => state.bottomPanelHeight);
   const setHeight = useGeoStore((state) => state.setBottomPanelHeight);
+  const activeTab = useGeoStore((state) => state.activeBottomTab);
+  const setTab = useGeoStore((state) => state.setBottomTab);
 
   const [isResizing, setIsResizing] = React.useState(false);
   const isDragging = useRef(false);
@@ -84,21 +86,67 @@ export function BottomPanel() {
       {/* Panel Header/Tab Bar */}
       {isBottomPanelOpen && (
         <>
-          <div className="flex items-center gap-4 px-4 h-10 border-b border-white/5 bg-white/5">
-            <div className="text-[11px] font-medium text-white/40 uppercase tracking-widest">Editor</div>
-            <div className="px-3 py-1 bg-white/10 rounded text-[11px] text-white/90 font-medium">Node Editor</div>
+          <div className="flex items-center h-10 border-b border-white/5 bg-white/5 overflow-hidden">
+            <div className="px-4 text-[9px] font-black text-white/20 uppercase tracking-[0.2em] border-r border-white/5 h-full flex items-center bg-black/20">
+              Editors
+            </div>
+            
+            <div className="flex h-full">
+              <button
+                onClick={() => setTab("nodes")}
+                className={`flex items-center gap-2 px-6 h-full transition-all border-r border-white/5 ${
+                  activeTab === "nodes" 
+                    ? "bg-white/10 text-white shadow-[inset_0_2px_0_#3b82f6]" 
+                    : "text-white/40 hover:bg-white/5 hover:text-white/60"
+                }`}
+              >
+                <ShareNetwork size={16} weight={activeTab === "nodes" ? "bold" : "regular"} className={activeTab === "nodes" ? "text-blue-400" : ""} />
+                <span className="text-[10px] uppercase font-bold tracking-widest">Node Editor</span>
+              </button>
+
+              <button
+                onClick={() => setTab("data")}
+                className={`flex items-center gap-2 px-6 h-full transition-all border-r border-white/5 ${
+                  activeTab === "data" 
+                    ? "bg-white/10 text-white shadow-[inset_0_2px_0_#10b981]" 
+                    : "text-white/40 hover:bg-white/5 hover:text-white/60"
+                }`}
+              >
+                <Table size={16} weight={activeTab === "data" ? "bold" : "regular"} className={activeTab === "data" ? "text-emerald-400" : ""} />
+                <span className="text-[10px] uppercase font-bold tracking-widest">Spreadsheet</span>
+              </button>
+            </div>
           </div>
 
-          {/* Flow Area Placeholder */}
-          <div className="flex-1 relative overflow-hidden flex items-center justify-center group">
-             {/* Grid background pattern */}
-             <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
-                  style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-             
-             <div className="flex flex-col items-center gap-3 opacity-20 group-hover:opacity-40 transition-opacity">
-                <ShareNetwork size={48} weight="thin" />
-                <span className="text-xs tracking-tighter uppercase font-light">React Flow Area coming soon</span>
-             </div>
+          <div className="flex-1 relative overflow-hidden flex flex-col">
+            {activeTab === "nodes" ? (
+              /* Flow Area Placeholder */
+              <div className="flex-1 flex items-center justify-center group">
+                 {/* Grid background pattern */}
+                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
+                      style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+                 
+                 <div className="flex flex-col items-center gap-3 opacity-20 group-hover:opacity-40 transition-opacity">
+                    <ShareNetwork size={48} weight="thin" />
+                    <span className="text-xs tracking-tighter uppercase font-light">React Flow Area coming soon</span>
+                 </div>
+              </div>
+            ) : (
+              /* Data Spreadsheet Placeholder */
+              <div className="flex-1 p-6 flex flex-col gap-6 overflow-y-auto">
+                 <div className="flex flex-col gap-2">
+                    <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">Geometry Attributes</h3>
+                    <div className="w-full h-px bg-white/5" />
+                 </div>
+                 
+                 <div className="flex-1 flex items-center justify-center opacity-10">
+                    <div className="flex flex-col items-center gap-4">
+                       <Table size={64} weight="thin" />
+                       <span className="text-xs uppercase tracking-[0.3em] font-light">Attribute Data View</span>
+                    </div>
+                 </div>
+              </div>
+            )}
           </div>
         </>
       )}
