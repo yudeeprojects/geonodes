@@ -94,7 +94,8 @@ export function GeoMesh({
           }
         }}
       >
-        <bufferGeometry>
+        {/* Remount geometry + Edges whenever node graph produces new output */}
+        <bufferGeometry key={'geom-' + (data.userData.geomRevision ?? 0)}>
           <bufferAttribute
             attach="attributes-position" count={data.attributes.position.length / 3}
             array={data.attributes.position} itemSize={3}
@@ -132,9 +133,10 @@ export function GeoMesh({
         />
         {isSelected && (
           <Edges
+            key={'edges-' + (data.userData.geomRevision ?? 0)}
             scale={1}
             threshold={15}
-            color="#ff8c00" // Blender-style orange outline
+            color="#ff8c00"
           />
         )}
       </mesh>

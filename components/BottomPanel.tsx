@@ -4,6 +4,8 @@ import React, { useCallback, useRef } from "react";
 import { useGeoStore } from "@/lib/store";
 import { CaretUp, CaretDown, ShareNetwork, Table } from "@phosphor-icons/react";
 
+import { NodeEditor } from "./NodeEditor/NodeEditor";
+
 export function BottomPanel() {
   const isBottomPanelOpen = useGeoStore((state) => state.isBottomPanelOpen);
   const toggleBottomPanel = useGeoStore((state) => state.toggleBottomPanel);
@@ -120,17 +122,7 @@ export function BottomPanel() {
 
           <div className="flex-1 relative overflow-hidden flex flex-col">
             {activeTab === "nodes" ? (
-              /* Flow Area Placeholder */
-              <div className="flex-1 flex items-center justify-center group">
-                 {/* Grid background pattern */}
-                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
-                      style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-                 
-                 <div className="flex flex-col items-center gap-3 opacity-20 group-hover:opacity-40 transition-opacity">
-                    <ShareNetwork size={48} weight="thin" />
-                    <span className="text-xs tracking-tighter uppercase font-light">React Flow Area coming soon</span>
-                 </div>
-              </div>
+              <NodeEditor />
             ) : (
               /* Data Spreadsheet Placeholder */
               <div className="flex-1 p-6 flex flex-col gap-6 overflow-y-auto">

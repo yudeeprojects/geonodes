@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useGeoStore } from "@/lib/store";
-import * as PRISTINES from "@/lib/nodes/primitives";
+import * as PRISTINES from "@/lib/nodes";
 import { 
   Cube, 
   Sphere, 
